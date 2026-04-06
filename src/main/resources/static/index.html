@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FaceShield AI — Anti-Spoofing Security System</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=IBM+Plex+Mono:wght@300;400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #020408;
+      --surface: #0a0f1a;
+      --card: #0d1520;
+      --accent: #00e5ff;
+      --accent2: #ff3366;
+      --accent3: #00ff88;
+      --text: #c8d8e8;
+      --muted: #4a6080;
+      --border: rgba(0, 229, 255, 0.15);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'IBM Plex Sans', sans-serif;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* NAV & HERO (Unchanged from your styling) */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 60px;
+      background: rgba(2, 4, 8, 0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: 1.3rem;
+      color: var(--accent);
+      letter-spacing: 2px;
+      text-decoration: none;
+    }
+
+    .logo span {
+      color: var(--accent2);
+    }
+
+    nav ul {
+      display: flex;
+      list-style: none;
+      gap: 40px;
+    }
+
+    nav ul a {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+
+    nav ul a:hover {
+      color: var(--accent);
+    }
+
+    .nav-cta {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 10px 24px;
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nav-cta:hover {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 120px 60px 60px;
+      z-index: 1;
+    }
+
+    .hero-content {
+      max-width: 700px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent3);
+      margin-bottom: 30px;
+    }
+
+    .hero-badge::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: var(--accent3);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.4;
+        transform: scale(0.8);
+      }
+    }
+
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      line-height: 1.0;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    h1 .highlight {
+      color: transparent;
+      -webkit-text-stroke: 1px var(--accent);
+    }
+
+    .hero-sub {
+      font-size: 1.1rem;
+      color: var(--muted);
+      line-height: 1.7;
+      margin: 24px 0 40px;
+      max-width: 550px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.8rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 16px 36px;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+      clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+    }
+
+    .btn-primary:hover {
+      background: #33ecff;
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.8rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 16px 36px;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .hero-visual {
+      position: absolute;
+      right: 60px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 420px;
+      height: 420px;
+    }
+
+    .face-frame {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .face-circle {
+      width: 280px;
+      height: 280px;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 229, 255, 0.3);
+      position: relative;
+      animation: rotate 20s linear infinite;
+    }
+
+    .face-circle::before,
+    .face-circle::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 229, 255, 0.15);
+    }
+
+    .face-circle::before {
+      inset: -30px;
+    }
+
+    .face-circle::after {
+      inset: -60px;
+    }
+
+    @keyframes rotate {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .face-svg {
+      position: absolute;
+      width: 180px;
+      height: 180px;
+    }
+
+    .scan-line {
+      position: absolute;
+      left: 70px;
+      right: 70px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      animation: scan 3s ease-in-out infinite;
+      top: 50%;
+    }
+
+    @keyframes scan {
+
+      0%,
+      100% {
+        transform: translateY(-80px);
+        opacity: 0;
+      }
+
+      20%,
+      80% {
+        opacity: 1;
+      }
+
+      50% {
+        transform: translateY(80px);
+      }
+    }
+
+    .corner {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+    }
+
+    .corner.tl {
+      top: 85px;
+      left: 85px;
+      border-top: 2px solid var(--accent);
+      border-left: 2px solid var(--accent);
+    }
+
+    .corner.tr {
+      top: 85px;
+      right: 85px;
+      border-top: 2px solid var(--accent);
+      border-right: 2px solid var(--accent);
+    }
+
+    .corner.bl {
+      bottom: 85px;
+      left: 85px;
+      border-bottom: 2px solid var(--accent);
+      border-left: 2px solid var(--accent);
+    }
+
+    .corner.br {
+      bottom: 85px;
+      right: 85px;
+      border-bottom: 2px solid var(--accent);
+      border-right: 2px solid var(--accent);
+    }
+
+    .status-dots {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--accent3);
+      letter-spacing: 2px;
+      white-space: nowrap;
+    }
+
+    .dot-blink {
+      animation: blink 1s step-end infinite;
+    }
+
+    @keyframes blink {
+      50% {
+        opacity: 0;
+      }
+    }
+
+    /* STATS BAR */
+    .stats-bar {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      gap: 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .stat-item {
+      flex: 1;
+      padding: 30px 40px;
+      border-right: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .stat-item:last-child {
+      border-right: none;
+    }
+
+    .stat-num {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--accent);
+      display: block;
+    }
+
+    .stat-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 6px;
+      display: block;
+    }
+
+    /* SECTIONS */
+    section {
+      position: relative;
+      z-index: 1;
+      padding: 100px 60px;
+    }
+
+    .section-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--accent2);
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(1.8rem, 3vw, 2.8rem);
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 16px;
+    }
+
+    .section-desc {
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.8;
+      max-width: 600px;
+      margin-bottom: 60px;
+    }
+
+    /* --- NEW INTERACTIVE SCANNER STYLES --- */
+    .scanner-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 40px;
+      max-width: 1000px;
+    }
+
+    .upload-box {
+      border: 2px dashed var(--muted);
+      background: rgba(0, 0, 0, 0.2);
+      height: 300px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      transition: border-color 0.3s;
+      overflow: hidden;
+    }
+
+    .upload-box:hover {
+      border-color: var(--accent);
+    }
+
+    .upload-prompt {
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .upload-prompt span {
+      font-size: 2.5rem;
+      display: block;
+      margin-bottom: 15px;
+    }
+
+    .upload-prompt p {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    #image-preview {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+      z-index: 2;
+    }
+
+    .analysis-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .terminal-window {
+      background: #000;
+      border: 1px solid var(--border);
+      padding: 20px;
+      height: 100%;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--accent);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .terminal-header {
+      border-bottom: 1px solid rgba(0, 229, 255, 0.2);
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+      color: var(--muted);
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      letter-spacing: 2px;
+    }
+
+    #terminal-logs {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .log-line {
+      margin: 0;
+    }
+
+    .log-error {
+      color: var(--accent2);
+    }
+
+    .log-success {
+      color: var(--accent3);
+    }
+
+    .final-result-badge {
+      display: inline-block;
+      padding: 10px 20px;
+      margin-top: 15px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-align: center;
+      display: none;
+    }
+
+    .final-result-badge.real {
+      background: rgba(0, 255, 136, 0.1);
+      border: 1px solid var(--accent3);
+      color: var(--accent3);
+    }
+
+    .final-result-badge.spoof {
+      background: rgba(255, 51, 102, 0.1);
+      border: 1px solid var(--accent2);
+      color: var(--accent2);
+      animation: pulse 1s infinite;
+    }
+
+    /* FOOTER */
+    footer {
+      position: relative;
+      z-index: 1;
+      padding: 40px 60px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    @media (max-width: 1024px) {
+      .hero-visual {
+        display: none;
+      }
+
+      .scanner-container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav>
+    <a href="#" class="logo">FACE<span>SHIELD</span> AI</a>
+    <ul>
+      <li><a href="#demo">Live Test</a></li>
+      <li><a href="#how">How It Works</a></li>
+      <li><a href="#threats">Threats</a></li>
+      <li><a href="#tech">Technology</a></li>
+    </ul>
+    <button class="nav-cta" onclick="document.getElementById('demo').scrollIntoView({behavior: 'smooth'})">Test
+      System</button>
+  </nav>
+
+  <section class="hero" id="about">
+    <div class="hero-content">
+      <div class="hero-badge">Local Spring Boot Connected</div>
+      <h1>AI-Powered<br>Face <span class="highlight">Anti-Spoofing</span><br>System</h1>
+      <p class="hero-sub">Next-generation liveness detection using deep learning to protect face recognition systems
+        from printed photos, video replays, and 3D mask attacks.</p>
+      <div class="hero-actions">
+        <button class="btn-primary"
+          onclick="document.getElementById('demo').scrollIntoView({behavior: 'smooth'})">Launch Scanner</button>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="face-frame">
+        <div class="face-circle"></div>
+        <div class="scan-line"></div>
+        <div class="corner tl"></div>
+        <div class="corner tr"></div>
+        <div class="corner bl"></div>
+        <div class="corner br"></div>
+        <svg class="face-svg" viewBox="0 0 100 100" fill="none">
+          <ellipse cx="50" cy="45" rx="28" ry="34" stroke="rgba(0,229,255,0.4)" stroke-width="0.8" />
+          <circle cx="38" cy="38" r="4" stroke="rgba(0,229,255,0.5)" stroke-width="0.6" />
+          <circle cx="62" cy="38" r="4" stroke="rgba(0,229,255,0.5)" stroke-width="0.6" />
+          <path d="M40 55 Q50 62 60 55" stroke="rgba(0,229,255,0.4)" stroke-width="0.8" stroke-linecap="round" />
+        </svg>
+        <div class="status-dots"><span class="dot-blink">●</span> LIVENESS VERIFIED — CNN ACTIVE</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="demo" style="padding-top: 40px;">
+    <div class="section-label">Interactive System Demo</div>
+    <div class="section-title">FaceShield Scanner</div>
+    <div class="section-desc">Upload a photo to run it through the local Spring Boot neural network. The system will
+      determine if the face is genuine or a spoof attempt.</div>
+
+    <div class="scanner-container">
+      <div class="upload-box" id="upload-box" onclick="document.getElementById('file-input').click()">
+        <input type="file" id="file-input" accept="image/*" hidden>
+        <div class="upload-prompt" id="upload-prompt">
+          <span>⏏️</span>
+          <p>Click to Upload Face Image</p>
+        </div>
+        <img id="image-preview" alt="Preview">
+      </div>
+
+      <div class="analysis-panel">
+        <div class="terminal-window">
+          <div class="terminal-header">System Operations Log</div>
+          <div id="terminal-logs">
+            <p class="log-line">> Awaiting image input...</p>
+          </div>
+          <div id="final-result" class="final-result-badge"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="stats-bar">
+    <div class="stat-item">
+      <span class="stat-num">99.7%</span>
+      <span class="stat-label">Detection Accuracy</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num">
+        <150ms< /span>
+          <span class="stat-label">Response Time</span>
+    </div>
+  </div>
+
+  <footer>
+    <div>© 2024 FaceShield AI — Anti-Spoofing Security System</div>
+    <div style="font-family: 'Orbitron', sans-serif; font-size: 0.7rem; color: var(--accent); letter-spacing: 3px;">
+      FACESHIELD AI</div>
+    <div>Built with Java · Spring Boot · DJL</div>
+  </footer>
+
+  <script>
+    const fileInput = document.getElementById('file-input');
+    const imagePreview = document.getElementById('image-preview');
+    const uploadPrompt = document.getElementById('upload-prompt');
+    const terminalLogs = document.getElementById('terminal-logs');
+    const finalResult = document.getElementById('final-result');
+
+    function addLog(message, type = '') {
+      const p = document.createElement('p');
+      p.className = `log-line ${type}`;
+      p.innerText = `> ${message}`;
+      terminalLogs.appendChild(p);
+    }
+
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+
+      // Reset UI
+      terminalLogs.innerHTML = '';
+      finalResult.style.display = 'none';
+      finalResult.className = 'final-result-badge';
+
+      if (!file) {
+        addLog('Error: No file selected.', 'log-error');
+        imagePreview.style.display = 'none';
+        uploadPrompt.style.display = 'block';
+        return;
+      }
+
+      // Show Preview
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        imagePreview.src = event.target.result;
+        imagePreview.style.display = 'block';
+        uploadPrompt.style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+
+      addLog(`Loaded file: ${file.name}`);
+      addLog('Extracting features...');
+      addLog('Connecting to Spring Boot Engine (Port 8080)...');
+
+      // Send to Backend
+      const formData = new FormData();
+      formData.append("image", file); // Must match the @RequestParam in Java
+
+      try {
+        // Updated to use your new local Java backend!
+        const response = await fetch("http://localhost:8080/api/security/verify", {
+          method: "POST",
+          body: formData
+        });
+
+        if (response.ok) {
+          // Java returns a plain string, not JSON
+          const resultText = await response.text();
+
+          addLog('Analysis complete. Status code 200.', 'log-success');
+
+          // Display the result
+          finalResult.innerText = `VERDICT: ${resultText.toUpperCase()}`;
+          finalResult.style.display = 'block';
+
+          if (resultText.toLowerCase().includes("spoof")) {
+            finalResult.classList.add("spoof");
+            addLog('WARNING: Liveness check failed.', 'log-error');
+          } else {
+            finalResult.classList.add("real");
+            addLog('Liveness verified successfully.', 'log-success');
+          }
+
+        } else {
+          addLog(`Server Error: Failed to process image (Status: ${response.status})`, 'log-error');
+        }
+      } catch (error) {
+        addLog('CRITICAL: Connection Refused.', 'log-error');
+        addLog('Ensure your Spring Boot backend is running.', 'log-error');
+      }
+    });
+  </script>
+</body>
+
+</html>
