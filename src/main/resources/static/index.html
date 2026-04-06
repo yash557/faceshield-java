@@ -741,7 +741,7 @@
 
       try {
         // Updated to use your new local Java backend!
-        const response = await fetch("http://localhost:8080/api/security/verify", {
+        const response = await fetch("/api/security/verify", {
           method: "POST",
           body: formData
         });
