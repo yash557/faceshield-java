@@ -598,6 +598,57 @@
         grid-template-columns: 1fr;
       }
     }
+
+    /* --- NEW WEBCAM STYLES --- */
+    .input-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: all 0.3s;
+    }
+
+    .tab-btn.active {
+      background: rgba(0, 229, 255, 0.1);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .webcam-container {
+      display: none;
+      /* Hidden by default */
+      flex-direction: column;
+      gap: 15px;
+      height: 100%;
+    }
+
+    #webcam-video {
+      width: 100%;
+      height: 250px;
+      object-fit: cover;
+      border: 1px solid var(--border);
+      background: #000;
+      transform: scaleX(-1);
+      /* Mirrors the camera like a real mirror */
+    }
+
+    #btn-capture {
+      width: 100%;
+      padding: 12px;
+      text-align: center;
+    }
   </style>
 </head>
 
@@ -653,13 +704,28 @@
       determine if the face is genuine or a spoof attempt.</div>
 
     <div class="scanner-container">
-      <div class="upload-box" id="upload-box" onclick="document.getElementById('file-input').click()">
-        <input type="file" id="file-input" accept="image/*" hidden>
-        <div class="upload-prompt" id="upload-prompt">
-          <span>⏏️</span>
-          <p>Click to Upload Face Image</p>
+      <div class="input-section">
+
+        <div class="input-tabs">
+          <button id="tab-upload" class="tab-btn active">File Upload</button>
+          <button id="tab-webcam" class="tab-btn">Live Scanner</button>
         </div>
-        <img id="image-preview" alt="Preview">
+
+        <div class="upload-box" id="upload-box" onclick="document.getElementById('file-input').click()">
+          <input type="file" id="file-input" accept="image/*" hidden>
+          <div class="upload-prompt" id="upload-prompt">
+            <span>⏏️</span>
+            <p>Click to Upload Face Image</p>
+          </div>
+          <img id="image-preview" alt="Preview">
+        </div>
+
+        <div class="webcam-container" id="webcam-container">
+          <video id="webcam-video" autoplay playsinline></video>
+          <button id="btn-capture" class="btn-primary">Snap & Verify</button>
+          <canvas id="webcam-canvas" style="display: none;"></canvas>
+        </div>
+
       </div>
 
       <div class="analysis-panel">
@@ -694,33 +760,87 @@
   </footer>
 
   <script>
+    // UI Elements
     const fileInput = document.getElementById('file-input');
     const imagePreview = document.getElementById('image-preview');
     const uploadPrompt = document.getElementById('upload-prompt');
     const terminalLogs = document.getElementById('terminal-logs');
     const finalResult = document.getElementById('final-result');
 
+    // Tab Elements
+    const tabUpload = document.getElementById('tab-upload');
+    const tabWebcam = document.getElementById('tab-webcam');
+    const uploadBox = document.getElementById('upload-box');
+    const webcamContainer = document.getElementById('webcam-container');
+
+    // Webcam Elements
+    const video = document.getElementById('webcam-video');
+    const canvas = document.getElementById('webcam-canvas');
+    const btnCapture = document.getElementById('btn-capture');
+    let stream = null;
+
+    // --- LOGGING HELPER ---
     function addLog(message, type = '') {
       const p = document.createElement('p');
       p.className = `log-line ${type}`;
       p.innerText = `> ${message}`;
       terminalLogs.appendChild(p);
+      terminalLogs.scrollTop = terminalLogs.scrollHeight; // Auto-scroll
     }
 
-    fileInput.addEventListener('change', async (e) => {
-      const file = e.target.files[0];
+    // --- TAB SWITCHING LOGIC ---
+    tabUpload.addEventListener('click', () => {
+      tabUpload.classList.add('active');
+      tabWebcam.classList.remove('active');
+      uploadBox.style.display = 'flex';
+      webcamContainer.style.display = 'none';
+      stopWebcam();
+    });
 
-      // Reset UI
-      terminalLogs.innerHTML = '';
-      finalResult.style.display = 'none';
-      finalResult.className = 'final-result-badge';
+    tabWebcam.addEventListener('click', () => {
+      tabWebcam.classList.add('active');
+      tabUpload.classList.remove('active');
+      uploadBox.style.display = 'none';
+      webcamContainer.style.display = 'flex';
+      startWebcam();
+    });
 
-      if (!file) {
-        addLog('Error: No file selected.', 'log-error');
-        imagePreview.style.display = 'none';
-        uploadPrompt.style.display = 'block';
-        return;
+    // --- WEBCAM LOGIC ---
+    async function startWebcam() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        addLog('Camera hardware engaged.', 'log-success');
+      } catch (err) {
+        addLog('Error: Camera access denied or unavailable.', 'log-error');
       }
+    }
+
+    function stopWebcam() {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
+      }
+    }
+
+    btnCapture.addEventListener('click', () => {
+      // Draw the current video frame to the hidden canvas
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Convert canvas to a Blob (image file) and process it
+      canvas.toBlob((blob) => {
+        const file = new File([blob], "webcam_snap.jpg", { type: "image/jpeg" });
+        processFace(file, "Live Camera Feed");
+      }, 'image/jpeg', 0.9);
+    });
+
+    // --- FILE UPLOAD LOGIC ---
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
 
       // Show Preview
       const reader = new FileReader();
@@ -731,26 +851,32 @@
       };
       reader.readAsDataURL(file);
 
-      addLog(`Loaded file: ${file.name}`);
-      addLog('Extracting features...');
-      addLog('Connecting to Spring Boot Engine (Port 8080)...');
+      processFace(file, file.name);
+    });
 
-      // Send to Backend
+    // --- CORE COMMUNICATION LOGIC (Shared) ---
+    async function processFace(file, sourceName) {
+      // Reset UI
+      terminalLogs.innerHTML = '';
+      finalResult.style.display = 'none';
+      finalResult.className = 'final-result-badge';
+
+      addLog(`Initiating scan from: ${sourceName}`);
+      addLog('Extracting biometric features...');
+      addLog('Connecting to FaceShield Cloud Security Engine...');
+
       const formData = new FormData();
-      formData.append("image", file); // Must match the @RequestParam in Java
+      formData.append("image", file); // Matches @RequestParam("image") in Java
 
       try {
-        // Updated to use your new local Java backend!
         const response = await fetch("/api/security/verify", {
           method: "POST",
           body: formData
         });
 
         if (response.ok) {
-          // Java returns a plain string, not JSON
           const resultText = await response.text();
-
-          addLog('Analysis complete. Status code 200.', 'log-success');
+          addLog('Analysis complete. Database updated.', 'log-success');
 
           // Display the result
           finalResult.innerText = `VERDICT: ${resultText.toUpperCase()}`;
@@ -758,20 +884,18 @@
 
           if (resultText.toLowerCase().includes("spoof")) {
             finalResult.classList.add("spoof");
-            addLog('WARNING: Liveness check failed.', 'log-error');
+            addLog('WARNING: System detected spoofing artifacts.', 'log-error');
           } else {
             finalResult.classList.add("real");
-            addLog('Liveness verified successfully.', 'log-success');
+            addLog('Liveness verified safely.', 'log-success');
           }
-
         } else {
-          addLog(`Server Error: Failed to process image (Status: ${response.status})`, 'log-error');
+          addLog(`Server Error: Status ${response.status}`, 'log-error');
         }
       } catch (error) {
-        addLog('CRITICAL: Connection Refused.', 'log-error');
-        addLog('Ensure your Spring Boot backend is running.', 'log-error');
+        addLog('CRITICAL: Network failure or Cloud Engine offline.', 'log-error');
       }
-    });
+    }
   </script>
 </body>
 
